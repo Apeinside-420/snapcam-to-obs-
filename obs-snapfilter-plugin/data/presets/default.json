@@ -1,0 +1,13 @@
+{
+    "name": "Default Snap Filter",
+    "description": "Default face-tracking filter preset",
+    "shader": "default.shader",
+    "parameters": {
+        "filter_intensity": 0.5,
+        "tint_color": [1.0, 1.0, 1.0, 1.0],
+        "use_face_mask": true,
+        "smooth_edges": 0.3,
+        "glow_radius": 0.02,
+        "glow_intensity": 0.5
+    }
+}

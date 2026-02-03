@@ -1,0 +1,30 @@
+obs-snapfilter-plugin/
+src/
+    main.cpp
+    snap-filter.cpp
+    snap-filter.h
+    face-tracker.cpp
+    face-tracker.h
+    shader-utils.cpp
+    shader-utils.h
+    lens-loader.cpp
+    lens-loader.h
+include/
+    obs-snapfilter.h
+    version.h
+data/
+    locale/
+        en-US.ini
+    shaders/
+        default.shader
+        face-mask.shader
+        beauty-filter.shader
+        cartoon.shader
+        lut.shader
+    presets/
+        default.json
+tests/
+CMakeLists.txt
+buildspec.json
+LICENSE
+README.md

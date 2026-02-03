@@ -1,0 +1,7 @@
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/obs-snapfilter.dir
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/edit_cache.dir
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/rebuild_cache.dir
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/list_install_components.dir
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/install.dir
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/install/local.dir
+/home/apein/projects/snapcam-to-obs/obs-snapfilter-plugin/build/CMakeFiles/install/strip.dir

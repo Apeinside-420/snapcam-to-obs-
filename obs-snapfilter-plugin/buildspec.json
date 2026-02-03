@@ -1,0 +1,15 @@
+{
+    "name": "Snap Camera Filter",
+    "description": "Real-time face tracking filter for OBS Studio",
+    "version": "1.0.0",
+    "author": "Community",
+    "license": "GPL-2.0",
+    "website": "https://github.com/yourusername/obs-snapfilter",
+    "dependencies": {
+        "obs": ">=28.0.0",
+        "opencv": ">=4.0.0"
+    },
+    "platforms": ["windows", "macos", "linux"],
+    "tags": ["filter", "face-tracking", "snap-camera", "effects"],
+    "donate": "https://github.com/sponsors/yourusername"
+}
