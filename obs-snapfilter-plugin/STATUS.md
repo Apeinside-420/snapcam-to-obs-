@@ -1,88 +1,86 @@
 # C++ Plugin Status
 
-## Current Status: Work In Progress ⚠️
+## Current Status: OBS 30+ Compatible ✅
 
-The C++ OBS plugin is **not yet compatible** with OBS Studio 30.x API.
+The C++ OBS plugin has been updated to work with **OBS Studio 30.x and later**.
 
-### Issues
+### What Was Fixed
 
-The codebase was written for an older OBS API and requires significant updates:
+The original codebase had several API compatibility issues with OBS 30+:
 
-1. **Graphics API Changes**
-   - OBS 30 uses `struct vec2*` and `struct vec4*` instead of `float*` arrays
-   - Texture rendering functions have changed
-   - Several graphics API signatures updated
+1. **Data Types Updated**
+   - Changed `float[2]` arrays to `struct vec2` for face tracking data
+   - Changed `float[4]` arrays to `struct vec4` for color data
+   - Added required includes: `<graphics/vec2.h>`, `<graphics/vec4.h>`
 
-2. **Required Fixes**
-   - Update all `float[]` arrays to `struct vec2` and `struct vec4`
-   - Replace deprecated texture rendering calls
-   - Update shader parameter setting functions
-   - Test with OBS 30 graphics pipeline
+2. **API Function Calls Fixed**
+   - `gs_effect_set_vec2()` and `gs_effect_set_vec4()` now receive proper `struct vec2*` and `struct vec4*` pointers
+   - Replaced broken `gs_texture_render_start/end` calls with correct `obs_source_process_filter_begin/end` pattern
+   - Fixed memory leak from per-frame texture creation
 
-3. **Estimated Work**
-   - ~2-4 hours to update all API calls
-   - Additional testing and debugging time
-   - May require OBS plugin development expertise
+3. **Build System Updated**
+   - CMakeLists.txt now requires OBS 30.0.0 minimum
+   - Added version check to fail fast if older OBS is detected
 
-## Recommended Solution: Python Script ✅
+### Files Modified
 
-**Use the Python OBS script instead** - it's fully functional and production-ready:
+- `src/snap-filter.h` - Data type definitions
+- `src/snap-filter.cpp` - All API calls and rendering
+- `CMakeLists.txt` - Version requirements
 
-### Location
-`obs-python-script/snap_filter.py`
+### Building
 
-### Features
-- ✅ 6 filter effects (Beauty, Cartoon, Glow, Tint, Edge, Blur)
-- ✅ Real-time face tracking with OpenCV
-- ✅ Smooth tracking interpolation
-- ✅ Full OBS integration
-- ✅ Configurable parameters
-- ✅ No compilation required
-- ✅ Cross-platform compatible
-- ✅ **Fully tested and working**
+**Prerequisites:**
 
-### Installation (2 minutes)
 ```bash
-# Install dependencies
-pip3 install opencv-python numpy Pillow
+# macOS
+brew install cmake opencv jsoncpp
+# OBS SDK: Download from https://github.com/obsproject/obs-studio/releases
 
-# Copy to OBS
-cp obs-python-script/snap_filter.py ~/.config/obs-studio/scripts/
+# Linux (Ubuntu/Debian)
+sudo apt install cmake libobs-dev libopencv-dev libjsoncpp-dev
 
-# Use in OBS: Tools → Scripts → Add → snap_filter.py
+# Windows
+# Install CMake, OpenCV, jsoncpp, and OBS SDK
 ```
 
-### Performance
-- 1080p: 45-50 FPS with face tracking
-- 720p: 55-60 FPS with face tracking
-- CPU usage: 15-20% @ 1080p
-- More than adequate for streaming and recording
+**Build:**
 
-## Future Plans
+```bash
+cd obs-snapfilter-plugin
+mkdir build && cd build
+cmake ..
+make
+```
 
-The C++ plugin may be updated in a future release to work with OBS 30+:
-- See `ROADMAP.md` for development plans
-- Phase 2 includes "C++ Plugin Completion"
-- Contributions welcome from OBS plugin developers
+**Install:**
 
-## Documentation
+Copy the built `obs-snapfilter.so` (Linux/macOS) or `obs-snapfilter.dll` (Windows) to your OBS plugins folder:
+- Linux: `~/.config/obs-studio/plugins/`
+- macOS: `~/Library/Application Support/obs-studio/plugins/`
+- Windows: `%APPDATA%\obs-studio\plugins\`
 
-- **Python Script Guide**: `obs-python-script/README.md`
-- **Quick Start**: `QUICKSTART.md`
-- **Demo & Examples**: `DEMO.md`
-- **Test Script**: `test_face_tracking.py`
+### Features
 
-## Contributing
+- ✅ Real-time face tracking with OpenCV
+- ✅ Custom shader effects with face data
+- ✅ Configurable filter intensity and tint color
+- ✅ Smooth tracking interpolation
+- ✅ Background thread for face detection
 
-If you have OBS plugin development experience and want to help update the C++ plugin:
-1. Review OBS 30 API changes: https://obsproject.com/
-2. Update graphics API calls to match current signatures
-3. Test with OBS Studio 30.x
-4. Submit pull request with fixes
+### Alternative: Python Script
 
-For most users, the **Python script is the best choice** and requires no additional work.
+If you prefer a no-compile solution, use the Python script instead:
+
+```bash
+# Copy to OBS scripts folder
+cp obs-python-script/snap_filter.py ~/.config/obs-studio/scripts/
+
+# In OBS: Tools → Scripts → Add → snap_filter.py
+```
+
+See `obs-python-script/README.md` for details.
 
 ---
 
-**Status:** Python script production-ready ✅ | C++ plugin needs API updates ⚠️  
 **Last Updated:** February 3, 2026
