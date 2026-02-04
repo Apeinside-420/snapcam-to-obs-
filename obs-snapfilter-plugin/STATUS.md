@@ -53,8 +53,9 @@ git clone --depth 1 --branch 32.0.4 https://github.com/obsproject/obs-studio.git
 # Linux (Ubuntu/Debian)
 sudo apt install cmake libobs-dev libopencv-dev libjsoncpp-dev
 
-# Windows
-# Install CMake, OpenCV, jsoncpp, and OBS SDK
+# Windows (using vcpkg)
+vcpkg install opencv4:x64-windows jsoncpp:x64-windows
+# Download OBS source or SDK from https://github.com/obsproject/obs-studio/releases
 ```
 
 **Build:**
@@ -70,14 +71,35 @@ make
 # Linux (with pkg-config)
 cmake ..
 make
+
+# Windows (Visual Studio)
+cmake .. -G "Visual Studio 17 2022" -A x64 ^
+    -DOBS_SOURCE_DIR=C:/path/to/obs-studio ^
+    -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build . --config Release
 ```
 
 **Install:**
 
-Copy the built `obs-snapfilter.so` (Linux/macOS) or `obs-snapfilter.dll` (Windows) to your OBS plugins folder:
-- Linux: `~/.config/obs-studio/plugins/`
-- macOS: `~/Library/Application Support/obs-studio/plugins/`
-- Windows: `%APPDATA%\obs-studio\plugins\`
+Copy the built plugin to your OBS plugins folder:
+
+**Linux:**
+```bash
+mkdir -p ~/.config/obs-studio/plugins/obs-snapfilter/bin/64bit
+cp obs-snapfilter.so ~/.config/obs-studio/plugins/obs-snapfilter/bin/64bit/
+```
+
+**macOS:**
+```bash
+mkdir -p ~/Library/Application\ Support/obs-studio/plugins/obs-snapfilter.plugin/Contents/MacOS
+cp obs-snapfilter.so ~/Library/Application\ Support/obs-studio/plugins/obs-snapfilter.plugin/Contents/MacOS/obs-snapfilter
+```
+
+**Windows:**
+```cmd
+mkdir "%APPDATA%\obs-studio\plugins\obs-snapfilter\bin\64bit"
+copy obs-snapfilter.dll "%APPDATA%\obs-studio\plugins\obs-snapfilter\bin\64bit\"
+```
 
 ### Features
 

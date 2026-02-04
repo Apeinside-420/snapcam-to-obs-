@@ -7,43 +7,84 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Require OBS 30+ for updated graphics API
 set(OBS_MIN_VERSION "30.0.0")
 
-# Find packages using pkg-config
-find_package(PkgConfig REQUIRED)
+# Find packages
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 
-# Find OBS - try pkg-config first, fall back to manual paths
-pkg_check_modules(LIBOBS libobs)
+# Platform-specific package finding
+if(WIN32)
+    # Windows: Use find_package or manual paths
+    find_package(libobs QUIET)
+    find_package(jsoncpp QUIET)
 
-if(NOT LIBOBS_FOUND)
-    # Manual OBS setup for macOS/systems without pkg-config
-    if(DEFINED OBS_SOURCE_DIR)
+    if(NOT libobs_FOUND AND DEFINED OBS_SOURCE_DIR)
         message(STATUS "Using OBS source from: ${OBS_SOURCE_DIR}")
         set(LIBOBS_INCLUDE_DIRS "${OBS_SOURCE_DIR}/libobs")
-        # On macOS, link against framework in /Applications/OBS.app
-        if(APPLE)
-            set(LIBOBS_FRAMEWORK "/Applications/OBS.app/Contents/Frameworks/libobs.framework")
-            if(EXISTS ${LIBOBS_FRAMEWORK})
-                set(LIBOBS_LIBRARIES "${LIBOBS_FRAMEWORK}/libobs")
-            else()
-                message(WARNING "libobs.framework not found - plugin will compile but not link")
-                set(LIBOBS_LIBRARIES "")
+        # Look for OBS libraries in common Windows locations
+        if(DEFINED OBS_LIB_DIR)
+            set(LIBOBS_LIBRARIES "${OBS_LIB_DIR}/obs.lib")
+        else()
+            # Default OBS install location on Windows
+            set(OBS_INSTALL_DIR "$ENV{ProgramFiles}/obs-studio")
+            if(EXISTS "${OBS_INSTALL_DIR}/bin/64bit/obs.dll")
+                set(LIBOBS_LIBRARIES "${OBS_INSTALL_DIR}/bin/64bit/obs.lib")
             endif()
         endif()
         set(LIBOBS_FOUND TRUE)
-        set(LIBOBS_VERSION "32.0.0")  # Assume OBS 32+ when using source
-    else()
-        message(FATAL_ERROR "libobs not found via pkg-config. Set -DOBS_SOURCE_DIR=/path/to/obs-studio")
+        set(LIBOBS_VERSION "32.0.0")
     endif()
+
+    # jsoncpp on Windows
+    if(NOT jsoncpp_FOUND)
+        find_path(JSONCPP_INCLUDE_DIRS json/json.h
+            HINTS
+            "$ENV{VCPKG_ROOT}/installed/x64-windows/include"
+            "C:/vcpkg/installed/x64-windows/include"
+        )
+        find_library(JSONCPP_LIBRARIES jsoncpp
+            HINTS
+            "$ENV{VCPKG_ROOT}/installed/x64-windows/lib"
+            "C:/vcpkg/installed/x64-windows/lib"
+        )
+    else()
+        set(JSONCPP_INCLUDE_DIRS ${jsoncpp_INCLUDE_DIRS})
+        set(JSONCPP_LIBRARIES jsoncpp_lib)
+    endif()
+else()
+    # Unix: Use pkg-config
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(LIBOBS libobs)
+
+    if(NOT LIBOBS_FOUND)
+        # Manual OBS setup for macOS/systems without pkg-config
+        if(DEFINED OBS_SOURCE_DIR)
+            message(STATUS "Using OBS source from: ${OBS_SOURCE_DIR}")
+            set(LIBOBS_INCLUDE_DIRS "${OBS_SOURCE_DIR}/libobs")
+            # On macOS, link against framework in /Applications/OBS.app
+            if(APPLE)
+                set(LIBOBS_FRAMEWORK "/Applications/OBS.app/Contents/Frameworks/libobs.framework")
+                if(EXISTS ${LIBOBS_FRAMEWORK})
+                    set(LIBOBS_LIBRARIES "${LIBOBS_FRAMEWORK}/libobs")
+                else()
+                    message(WARNING "libobs.framework not found - plugin will compile but not link")
+                    set(LIBOBS_LIBRARIES "")
+                endif()
+            endif()
+            set(LIBOBS_FOUND TRUE)
+            set(LIBOBS_VERSION "32.0.0")
+        else()
+            message(FATAL_ERROR "libobs not found via pkg-config. Set -DOBS_SOURCE_DIR=/path/to/obs-studio")
+        endif()
+    endif()
+
+    # Find jsoncpp via pkg-config on Unix
+    pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 endif()
 
 # Verify OBS version (skip if manually configured)
 if(LIBOBS_VERSION AND LIBOBS_VERSION VERSION_LESS ${OBS_MIN_VERSION})
     message(FATAL_ERROR "OBS Studio ${OBS_MIN_VERSION} or higher required. Found: ${LIBOBS_VERSION}")
 endif()
-
-# Find jsoncpp
-pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
 # MediaPipe setup (optional but recommended)
 if(DEFINED MEDIAPIPE_DIR)
@@ -78,7 +119,15 @@ add_library(obs-snapfilter MODULE
 
 # Find simde (required by OBS for SIMD support)
 find_path(SIMDE_INCLUDE_DIR simde/x86/sse2.h
-    HINTS /opt/homebrew/opt/simde/include /usr/local/include
+    HINTS
+    # macOS Homebrew
+    /opt/homebrew/opt/simde/include
+    /usr/local/include
+    # Windows vcpkg
+    "$ENV{VCPKG_ROOT}/installed/x64-windows/include"
+    "C:/vcpkg/installed/x64-windows/include"
+    # Linux
+    /usr/include
 )
 
 # Include directories

@@ -1,6 +1,7 @@
 #include "face-tracker.h"
 #include <obs-module.h>
 #include <graphics/graphics.h>
+#include <cstdlib>
 
 FaceTracker::FaceTracker()
     : initialized(false)
@@ -45,6 +46,12 @@ bool FaceTracker::load_cascades()
 {
     // Try multiple paths for the cascade files
     std::vector<std::string> possible_paths = {
+#ifdef _WIN32
+        // Windows vcpkg
+        "C:/vcpkg/installed/x64-windows/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
+        "C:/opencv/build/etc/haarcascades/haarcascade_frontalface_default.xml",
+        "C:/opencv/etc/haarcascades/haarcascade_frontalface_default.xml",
+#else
         // macOS Homebrew (Apple Silicon)
         "/opt/homebrew/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
         "/opt/homebrew/opt/opencv/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
@@ -54,7 +61,15 @@ bool FaceTracker::load_cascades()
         // Linux
         "/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
         "/usr/share/opencv/haarcascades/haarcascade_frontalface_default.xml",
+#endif
     };
+
+    // Check OPENCV_DIR environment variable (works on all platforms)
+    const char* opencv_dir = std::getenv("OPENCV_DIR");
+    if (opencv_dir) {
+        std::string env_path = std::string(opencv_dir) + "/etc/haarcascades/haarcascade_frontalface_default.xml";
+        possible_paths.insert(possible_paths.begin(), env_path);
+    }
 
     // Add module path if available (may return NULL)
     char *module_cascade = obs_module_file("data/haarcascade_frontalface_default.xml");
@@ -71,12 +86,18 @@ bool FaceTracker::load_cascades()
     }
 
     if (face_cascade.empty()) {
-        blog(LOG_ERROR, "Could not load face detection cascade");
+        blog(LOG_ERROR, "Could not load face detection cascade. Tried %zu paths.", possible_paths.size());
         return false;
     }
 
     // Try to load eye cascade for better tracking
     std::vector<std::string> eye_paths = {
+#ifdef _WIN32
+        // Windows vcpkg
+        "C:/vcpkg/installed/x64-windows/share/opencv4/haarcascades/haarcascade_eye.xml",
+        "C:/opencv/build/etc/haarcascades/haarcascade_eye.xml",
+        "C:/opencv/etc/haarcascades/haarcascade_eye.xml",
+#else
         // macOS Homebrew (Apple Silicon)
         "/opt/homebrew/share/opencv4/haarcascades/haarcascade_eye.xml",
         "/opt/homebrew/opt/opencv/share/opencv4/haarcascades/haarcascade_eye.xml",
@@ -86,7 +107,14 @@ bool FaceTracker::load_cascades()
         // Linux
         "/usr/share/opencv4/haarcascades/haarcascade_eye.xml",
         "/usr/share/opencv/haarcascades/haarcascade_eye.xml",
+#endif
     };
+
+    // Check OPENCV_DIR environment variable
+    if (opencv_dir) {
+        std::string env_path = std::string(opencv_dir) + "/etc/haarcascades/haarcascade_eye.xml";
+        eye_paths.insert(eye_paths.begin(), env_path);
+    }
 
     // Add module path if available (may return NULL)
     char *module_eye = obs_module_file("data/haarcascade_eye.xml");
