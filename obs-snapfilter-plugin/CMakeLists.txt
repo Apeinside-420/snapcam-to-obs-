@@ -12,11 +12,33 @@ find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 
-# Find OBS using pkg-config
-pkg_check_modules(LIBOBS REQUIRED libobs)
+# Find OBS - try pkg-config first, fall back to manual paths
+pkg_check_modules(LIBOBS libobs)
 
-# Verify OBS version
-if(LIBOBS_VERSION VERSION_LESS ${OBS_MIN_VERSION})
+if(NOT LIBOBS_FOUND)
+    # Manual OBS setup for macOS/systems without pkg-config
+    if(DEFINED OBS_SOURCE_DIR)
+        message(STATUS "Using OBS source from: ${OBS_SOURCE_DIR}")
+        set(LIBOBS_INCLUDE_DIRS "${OBS_SOURCE_DIR}/libobs")
+        # On macOS, link against framework in /Applications/OBS.app
+        if(APPLE)
+            set(LIBOBS_FRAMEWORK "/Applications/OBS.app/Contents/Frameworks/libobs.framework")
+            if(EXISTS ${LIBOBS_FRAMEWORK})
+                set(LIBOBS_LIBRARIES "${LIBOBS_FRAMEWORK}/libobs")
+            else()
+                message(WARNING "libobs.framework not found - plugin will compile but not link")
+                set(LIBOBS_LIBRARIES "")
+            endif()
+        endif()
+        set(LIBOBS_FOUND TRUE)
+        set(LIBOBS_VERSION "32.0.0")  # Assume OBS 32+ when using source
+    else()
+        message(FATAL_ERROR "libobs not found via pkg-config. Set -DOBS_SOURCE_DIR=/path/to/obs-studio")
+    endif()
+endif()
+
+# Verify OBS version (skip if manually configured)
+if(LIBOBS_VERSION AND LIBOBS_VERSION VERSION_LESS ${OBS_MIN_VERSION})
     message(FATAL_ERROR "OBS Studio ${OBS_MIN_VERSION} or higher required. Found: ${LIBOBS_VERSION}")
 endif()
 
@@ -54,6 +76,11 @@ add_library(obs-snapfilter MODULE
     ${obs-snapfilter_HEADERS}
 )
 
+# Find simde (required by OBS for SIMD support)
+find_path(SIMDE_INCLUDE_DIR simde/x86/sse2.h
+    HINTS /opt/homebrew/opt/simde/include /usr/local/include
+)
+
 # Include directories
 target_include_directories(obs-snapfilter PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -61,9 +88,11 @@ target_include_directories(obs-snapfilter PRIVATE
     ${LIBOBS_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${JSONCPP_INCLUDE_DIRS}
+    ${SIMDE_INCLUDE_DIR}
 )
 
-# Link libraries
+# Link libraries (use target_link_directories for jsoncpp)
+target_link_directories(obs-snapfilter PRIVATE ${JSONCPP_LIBRARY_DIRS})
 target_link_libraries(obs-snapfilter PRIVATE
     ${LIBOBS_LIBRARIES}
     ${OpenCV_LIBS}

@@ -1,5 +1,6 @@
 #include "snap-filter.h"
 #include "shader-utils.h"
+#include "obs-snapfilter.h"
 #include <obs-module.h>
 #include <graphics/graphics.h>
 #include <graphics/matrix4.h>

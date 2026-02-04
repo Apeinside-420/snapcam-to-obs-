@@ -22,11 +22,21 @@ The original codebase had several API compatibility issues with OBS 30+:
    - CMakeLists.txt now requires OBS 30.0.0 minimum
    - Added version check to fail fast if older OBS is detected
 
+4. **macOS Compatibility**
+   - Fixed OpenCV/ObjC `NO` macro conflict by using specific headers
+   - Moved `OBS_DECLARE_MODULE()` from header to source file
+   - Added simde dependency for SIMD support
+   - Added support for OBS source directory build path
+
 ### Files Modified
 
-- `src/snap-filter.h` - Data type definitions
+- `src/snap-filter.h` - Data type definitions, OpenCV include fix
 - `src/snap-filter.cpp` - All API calls and rendering
-- `CMakeLists.txt` - Version requirements
+- `src/face-tracker.h` - OpenCV include fix, forward declarations
+- `src/face-tracker.cpp` - Fixed typedef usage
+- `src/main.cpp` - OBS module macros
+- `include/obs-snapfilter.h` - Removed duplicate module macros
+- `CMakeLists.txt` - Version requirements, macOS build support
 
 ### Building
 
@@ -34,8 +44,11 @@ The original codebase had several API compatibility issues with OBS 30+:
 
 ```bash
 # macOS
-brew install cmake opencv jsoncpp
-# OBS SDK: Download from https://github.com/obsproject/obs-studio/releases
+brew install cmake opencv jsoncpp simde
+brew install --cask obs
+
+# Clone OBS source for headers (macOS doesn't have libobs-dev)
+git clone --depth 1 --branch 32.0.4 https://github.com/obsproject/obs-studio.git /tmp/obs-sdk/obs-studio
 
 # Linux (Ubuntu/Debian)
 sudo apt install cmake libobs-dev libopencv-dev libjsoncpp-dev
@@ -49,6 +62,12 @@ sudo apt install cmake libobs-dev libopencv-dev libjsoncpp-dev
 ```bash
 cd obs-snapfilter-plugin
 mkdir build && cd build
+
+# macOS (requires OBS source path)
+cmake .. -DOBS_SOURCE_DIR=/tmp/obs-sdk/obs-studio
+make
+
+# Linux (with pkg-config)
 cmake ..
 make
 ```

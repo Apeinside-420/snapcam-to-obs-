@@ -11,8 +11,8 @@ extern "C" {
 #define OBS_SNAPFILTER_NAME "Snap Camera Filter"
 #define OBS_SNAPFILTER_VERSION "1.0.0"
 
-OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE("obs-snapfilter", "en-US")
+// NOTE: OBS_DECLARE_MODULE() and OBS_MODULE_USE_DEFAULT_LOCALE()
+// must be in exactly ONE source file (main.cpp), not in headers
 
 bool obs_module_load(void);
 void obs_module_unload(void);

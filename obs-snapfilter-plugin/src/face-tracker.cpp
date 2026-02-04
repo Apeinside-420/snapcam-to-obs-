@@ -80,7 +80,7 @@ bool FaceTracker::load_cascades()
     return true;
 }
 
-FaceData FaceTracker::process_frame(struct obs_source_t *source)
+FaceData FaceTracker::process_frame(obs_source_t *source)
 {
     if (!initialized || !source) {
         return {0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, {}};

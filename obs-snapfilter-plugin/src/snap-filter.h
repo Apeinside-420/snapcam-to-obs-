@@ -1,10 +1,15 @@
 #ifndef SNAP_FILTER_H
 #define SNAP_FILTER_H
 
+// Use specific OpenCV headers to avoid 'NO' macro conflict with
+// ObjC on macOS (the stitching module has conflicting enum values)
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/objdetect.hpp>
+
 #include <obs-module.h>
 #include <graphics/vec2.h>
 #include <graphics/vec4.h>
-#include <opencv2/opencv.hpp>
 #include <memory>
 #include <string>
 #include <vector>
