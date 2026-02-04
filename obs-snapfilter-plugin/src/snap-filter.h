@@ -2,6 +2,8 @@
 #define SNAP_FILTER_H
 
 #include <obs-module.h>
+#include <graphics/vec2.h>
+#include <graphics/vec4.h>
 #include <opencv2/opencv.hpp>
 #include <memory>
 #include <string>
@@ -35,15 +37,15 @@ struct snapfilter_data {
     gs_eparam_t *param_intensity;
     gs_eparam_t *param_tint_color;
     
-    // Face tracking data
-    float face_center[2];
-    float face_size[2];
+    // Face tracking data (OBS 30+ uses struct vec2/vec4)
+    struct vec2 face_center;
+    struct vec2 face_size;
     float face_rotation;
     float face_confidence;
-    
+
     // Filter parameters
     float intensity;
-    float tint_color[4];
+    struct vec4 tint_color;
     bool use_face_mask;
     float smooth_factor;
     
