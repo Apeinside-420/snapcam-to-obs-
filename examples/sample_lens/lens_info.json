@@ -1,0 +1,16 @@
+{
+    "name": "Sample Beauty Filter",
+    "description": "Test lens for Snap Camera to OBS converter",
+    "version": "1.0.0",
+    "author": "Test",
+    "face_tracking": true,
+    "files": {
+        "main_shader": "sample_beauty.shader",
+        "textures": []
+    },
+    "parameters": {
+        "smooth_amount": 0.5,
+        "whitening": 0.3,
+        "brightness": 0.1
+    }
+}
