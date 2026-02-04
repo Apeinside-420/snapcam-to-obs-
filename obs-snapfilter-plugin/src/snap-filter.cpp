@@ -279,10 +279,10 @@ void render_filter(snapfilter_data *filter, obs_source_t *target)
         std::lock_guard<std::mutex> lock(filter->data_mutex);
         
         if (filter->param_face_center) {
-            gs_effect_set_vec2(filter->param_face_center, filter->face_center);
+            gs_effect_set_vec2(filter->param_face_center, &filter->face_center);
         }
         if (filter->param_face_size) {
-            gs_effect_set_vec2(filter->param_face_size, filter->face_size);
+            gs_effect_set_vec2(filter->param_face_size, &filter->face_size);
         }
         if (filter->param_face_rotation) {
             gs_effect_set_float(filter->param_face_rotation, filter->face_rotation);
@@ -297,7 +297,7 @@ void render_filter(snapfilter_data *filter, obs_source_t *target)
             gs_effect_set_float(filter->param_intensity, filter->intensity);
         }
         if (filter->param_tint_color) {
-            gs_effect_set_vec4(filter->param_tint_color, filter->tint_color);
+            gs_effect_set_vec4(filter->param_tint_color, &filter->tint_color);
         }
     }
     
