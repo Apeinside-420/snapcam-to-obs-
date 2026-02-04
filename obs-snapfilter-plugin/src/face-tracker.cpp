@@ -45,42 +45,67 @@ bool FaceTracker::load_cascades()
 {
     // Try multiple paths for the cascade files
     std::vector<std::string> possible_paths = {
+        // macOS Homebrew (Apple Silicon)
+        "/opt/homebrew/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
+        "/opt/homebrew/opt/opencv/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
+        // macOS Homebrew (Intel)
+        "/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
+        "/usr/local/opt/opencv/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
+        // Linux
         "/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
         "/usr/share/opencv/haarcascades/haarcascade_frontalface_default.xml",
-        "/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
-        obs_module_file("data/haarcascade_frontalface_default.xml"),
     };
-    
+
+    // Add module path if available (may return NULL)
+    char *module_cascade = obs_module_file("data/haarcascade_frontalface_default.xml");
+    if (module_cascade) {
+        possible_paths.insert(possible_paths.begin(), module_cascade);
+        bfree(module_cascade);
+    }
+
     for (const auto &path : possible_paths) {
         if (face_cascade.load(path)) {
             blog(LOG_INFO, "Loaded face cascade from: %s", path.c_str());
             break;
         }
     }
-    
+
     if (face_cascade.empty()) {
         blog(LOG_ERROR, "Could not load face detection cascade");
         return false;
     }
-    
+
     // Try to load eye cascade for better tracking
     std::vector<std::string> eye_paths = {
+        // macOS Homebrew (Apple Silicon)
+        "/opt/homebrew/share/opencv4/haarcascades/haarcascade_eye.xml",
+        "/opt/homebrew/opt/opencv/share/opencv4/haarcascades/haarcascade_eye.xml",
+        // macOS Homebrew (Intel)
+        "/usr/local/share/opencv4/haarcascades/haarcascade_eye.xml",
+        "/usr/local/opt/opencv/share/opencv4/haarcascades/haarcascade_eye.xml",
+        // Linux
         "/usr/share/opencv4/haarcascades/haarcascade_eye.xml",
         "/usr/share/opencv/haarcascades/haarcascade_eye.xml",
-        obs_module_file("data/haarcascade_eye.xml"),
     };
-    
+
+    // Add module path if available (may return NULL)
+    char *module_eye = obs_module_file("data/haarcascade_eye.xml");
+    if (module_eye) {
+        eye_paths.insert(eye_paths.begin(), module_eye);
+        bfree(module_eye);
+    }
+
     for (const auto &path : eye_paths) {
         if (eye_cascade.load(path)) {
             blog(LOG_INFO, "Loaded eye cascade from: %s", path.c_str());
             break;
         }
     }
-    
+
     return true;
 }
 
-FaceData FaceTracker::process_frame(struct obs_source_t *source)
+FaceData FaceTracker::process_frame(obs_source_t *source)
 {
     if (!initialized || !source) {
         return {0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, {}};

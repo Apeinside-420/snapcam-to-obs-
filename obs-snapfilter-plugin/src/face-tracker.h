@@ -1,8 +1,14 @@
 #ifndef FACE_TRACKER_H
 #define FACE_TRACKER_H
 
-#include <opencv2/opencv.hpp>
+// Use specific OpenCV headers to avoid macOS 'NO' macro conflict
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/objdetect.hpp>
+
+// Forward declare OBS types to avoid heavy include
+struct obs_source;
+typedef struct obs_source obs_source_t;
 #include <vector>
 #include <atomic>
 #include <mutex>

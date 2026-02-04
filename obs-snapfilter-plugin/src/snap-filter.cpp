@@ -1,7 +1,11 @@
 #include "snap-filter.h"
 #include "shader-utils.h"
+#include "obs-snapfilter.h"
+#include <obs-module.h>
 #include <graphics/graphics.h>
 #include <graphics/matrix4.h>
+#include <graphics/vec2.h>
+#include <graphics/vec4.h>
 
 const char *snapfilter_get_name(void *unused)
 {
@@ -37,19 +41,14 @@ void *snapfilter_create(obs_data_t *settings, obs_source_t *source)
         bfree(shader_path);
     }
     
-    // Initialize face data
-    filter->face_center[0] = 0.5f;
-    filter->face_center[1] = 0.5f;
-    filter->face_size[0] = 0.0f;
-    filter->face_size[1] = 0.0f;
+    // Initialize face data (use vec2_set for OBS 30+ structs)
+    vec2_set(&filter->face_center, 0.5f, 0.5f);
+    vec2_set(&filter->face_size, 0.0f, 0.0f);
     filter->face_rotation = 0.0f;
     filter->face_confidence = 0.0f;
-    
-    // Initialize tint color
-    filter->tint_color[0] = 1.0f;
-    filter->tint_color[1] = 1.0f;
-    filter->tint_color[2] = 1.0f;
-    filter->tint_color[3] = 1.0f;
+
+    // Initialize tint color (use vec4_set for OBS 30+ structs)
+    vec4_set(&filter->tint_color, 1.0f, 1.0f, 1.0f, 1.0f);
     
     // Start tracking thread
     filter->tracking_thread = std::thread([filter]() {
@@ -97,12 +96,13 @@ void snapfilter_update(void *data, obs_data_t *settings)
     filter->tracking_enabled = obs_data_get_bool(settings, "tracking_enabled");
     filter->smooth_factor = (float)obs_data_get_double(settings, "smooth_factor");
     
-    // Load color
+    // Load color (extract ARGB components into vec4)
     uint32_t color = obs_data_get_int(settings, "tint_color");
-    filter->tint_color[0] = ((color >> 16) & 0xFF) / 255.0f;
-    filter->tint_color[1] = ((color >> 8) & 0xFF) / 255.0f;
-    filter->tint_color[2] = (color & 0xFF) / 255.0f;
-    filter->tint_color[3] = ((color >> 24) & 0xFF) / 255.0f;
+    vec4_set(&filter->tint_color,
+        ((color >> 16) & 0xFF) / 255.0f,  // R
+        ((color >> 8) & 0xFF) / 255.0f,   // G
+        (color & 0xFF) / 255.0f,          // B
+        ((color >> 24) & 0xFF) / 255.0f); // A
     
     // Load lens file if specified
     const char *lens_path = obs_data_get_string(settings, "lens_file");
@@ -247,12 +247,12 @@ void update_face_tracking(snapfilter_data *filter)
     
     std::lock_guard<std::mutex> lock(filter->data_mutex);
     
-    // Smooth the face data
+    // Smooth the face data (accessing struct vec2 members with .x and .y)
     float alpha = filter->smooth_factor;
-    filter->face_center[0] = filter->face_center[0] * (1.0f - alpha) + face_data.center_x * alpha;
-    filter->face_center[1] = filter->face_center[1] * (1.0f - alpha) + face_data.center_y * alpha;
-    filter->face_size[0] = filter->face_size[0] * (1.0f - alpha) + face_data.width * alpha;
-    filter->face_size[1] = filter->face_size[1] * (1.0f - alpha) + face_data.height * alpha;
+    filter->face_center.x = filter->face_center.x * (1.0f - alpha) + face_data.center_x * alpha;
+    filter->face_center.y = filter->face_center.y * (1.0f - alpha) + face_data.center_y * alpha;
+    filter->face_size.x = filter->face_size.x * (1.0f - alpha) + face_data.width * alpha;
+    filter->face_size.y = filter->face_size.y * (1.0f - alpha) + face_data.height * alpha;
     filter->face_rotation = filter->face_rotation * (1.0f - alpha) + face_data.rotation * alpha;
     filter->face_confidence = face_data.confidence;
     filter->face_detected = face_data.confidence > 0.5f;
@@ -260,33 +260,22 @@ void update_face_tracking(snapfilter_data *filter)
 
 void render_filter(snapfilter_data *filter, obs_source_t *target)
 {
-    uint32_t width = obs_source_get_base_width(target);
-    uint32_t height = obs_source_get_base_height(target);
-    
-    gs_texture_t *tex = gs_texture_create(width, height, GS_RGBA, 1, nullptr, 0);
-    if (!tex) {
-        obs_source_skip_video_filter(filter->context);
+    UNUSED_PARAMETER(target);
+
+    // Use standard OBS filter rendering pattern
+    if (!obs_source_process_filter_begin(filter->context, GS_RGBA,
+                                          OBS_ALLOW_DIRECT_RENDERING))
         return;
-    }
-    
-    // Render source to texture
-    gs_texture_render_start(tex);
-    obs_source_video_render(target);
-    gs_texture_render_end(tex);
-    
-    // Set shader parameters
-    if (filter->param_image) {
-        gs_effect_set_texture(filter->param_image, tex);
-    }
-    
+
+    // Set shader parameters (within graphics context from process_filter_begin)
     {
         std::lock_guard<std::mutex> lock(filter->data_mutex);
-        
+
         if (filter->param_face_center) {
-            gs_effect_set_vec2(filter->param_face_center, filter->face_center);
+            gs_effect_set_vec2(filter->param_face_center, &filter->face_center);
         }
         if (filter->param_face_size) {
-            gs_effect_set_vec2(filter->param_face_size, filter->face_size);
+            gs_effect_set_vec2(filter->param_face_size, &filter->face_size);
         }
         if (filter->param_face_rotation) {
             gs_effect_set_float(filter->param_face_rotation, filter->face_rotation);
@@ -301,14 +290,10 @@ void render_filter(snapfilter_data *filter, obs_source_t *target)
             gs_effect_set_float(filter->param_intensity, filter->intensity);
         }
         if (filter->param_tint_color) {
-            gs_effect_set_vec4(filter->param_tint_color, filter->tint_color);
+            gs_effect_set_vec4(filter->param_tint_color, &filter->tint_color);
         }
     }
-    
-    // Render with shader
-    while (gs_effect_loop(filter->effect, "Draw")) {
-        gs_draw_sprite(tex, 0, width, height);
-    }
-    
-    gs_texture_destroy(tex);
+
+    // Render with custom effect
+    obs_source_process_filter_end(filter->context, filter->effect, 0, 0);
 }

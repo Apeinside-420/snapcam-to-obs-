@@ -2,6 +2,10 @@
 #include "snap-filter.h"
 #include <obs-module.h>
 
+// OBS module declaration - must be in exactly one source file
+OBS_DECLARE_MODULE()
+OBS_MODULE_USE_DEFAULT_LOCALE("obs-snapfilter", "en-US")
+
 bool obs_module_load(void)
 {
     blog(LOG_INFO, "Snap Camera Filter plugin loaded (version %s)", OBS_SNAPFILTER_VERSION);
