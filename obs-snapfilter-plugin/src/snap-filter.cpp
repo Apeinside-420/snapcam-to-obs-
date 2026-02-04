@@ -37,19 +37,14 @@ void *snapfilter_create(obs_data_t *settings, obs_source_t *source)
         bfree(shader_path);
     }
     
-    // Initialize face data
-    filter->face_center[0] = 0.5f;
-    filter->face_center[1] = 0.5f;
-    filter->face_size[0] = 0.0f;
-    filter->face_size[1] = 0.0f;
+    // Initialize face data (use vec2_set for OBS 30+ structs)
+    vec2_set(&filter->face_center, 0.5f, 0.5f);
+    vec2_set(&filter->face_size, 0.0f, 0.0f);
     filter->face_rotation = 0.0f;
     filter->face_confidence = 0.0f;
-    
-    // Initialize tint color
-    filter->tint_color[0] = 1.0f;
-    filter->tint_color[1] = 1.0f;
-    filter->tint_color[2] = 1.0f;
-    filter->tint_color[3] = 1.0f;
+
+    // Initialize tint color (use vec4_set for OBS 30+ structs)
+    vec4_set(&filter->tint_color, 1.0f, 1.0f, 1.0f, 1.0f);
     
     // Start tracking thread
     filter->tracking_thread = std::thread([filter]() {
