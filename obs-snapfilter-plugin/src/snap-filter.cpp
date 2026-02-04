@@ -243,12 +243,12 @@ void update_face_tracking(snapfilter_data *filter)
     
     std::lock_guard<std::mutex> lock(filter->data_mutex);
     
-    // Smooth the face data
+    // Smooth the face data (accessing struct vec2 members with .x and .y)
     float alpha = filter->smooth_factor;
-    filter->face_center[0] = filter->face_center[0] * (1.0f - alpha) + face_data.center_x * alpha;
-    filter->face_center[1] = filter->face_center[1] * (1.0f - alpha) + face_data.center_y * alpha;
-    filter->face_size[0] = filter->face_size[0] * (1.0f - alpha) + face_data.width * alpha;
-    filter->face_size[1] = filter->face_size[1] * (1.0f - alpha) + face_data.height * alpha;
+    filter->face_center.x = filter->face_center.x * (1.0f - alpha) + face_data.center_x * alpha;
+    filter->face_center.y = filter->face_center.y * (1.0f - alpha) + face_data.center_y * alpha;
+    filter->face_size.x = filter->face_size.x * (1.0f - alpha) + face_data.width * alpha;
+    filter->face_size.y = filter->face_size.y * (1.0f - alpha) + face_data.height * alpha;
     filter->face_rotation = filter->face_rotation * (1.0f - alpha) + face_data.rotation * alpha;
     filter->face_confidence = face_data.confidence;
     filter->face_detected = face_data.confidence > 0.5f;
