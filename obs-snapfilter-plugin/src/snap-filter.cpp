@@ -1,7 +1,10 @@
 #include "snap-filter.h"
 #include "shader-utils.h"
+#include <obs-module.h>
 #include <graphics/graphics.h>
 #include <graphics/matrix4.h>
+#include <graphics/vec2.h>
+#include <graphics/vec4.h>
 
 const char *snapfilter_get_name(void *unused)
 {
