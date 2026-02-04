@@ -256,28 +256,17 @@ void update_face_tracking(snapfilter_data *filter)
 
 void render_filter(snapfilter_data *filter, obs_source_t *target)
 {
-    uint32_t width = obs_source_get_base_width(target);
-    uint32_t height = obs_source_get_base_height(target);
-    
-    gs_texture_t *tex = gs_texture_create(width, height, GS_RGBA, 1, nullptr, 0);
-    if (!tex) {
-        obs_source_skip_video_filter(filter->context);
+    UNUSED_PARAMETER(target);
+
+    // Use standard OBS filter rendering pattern
+    if (!obs_source_process_filter_begin(filter->context, GS_RGBA,
+                                          OBS_ALLOW_DIRECT_RENDERING))
         return;
-    }
-    
-    // Render source to texture
-    gs_texture_render_start(tex);
-    obs_source_video_render(target);
-    gs_texture_render_end(tex);
-    
-    // Set shader parameters
-    if (filter->param_image) {
-        gs_effect_set_texture(filter->param_image, tex);
-    }
-    
+
+    // Set shader parameters (within graphics context from process_filter_begin)
     {
         std::lock_guard<std::mutex> lock(filter->data_mutex);
-        
+
         if (filter->param_face_center) {
             gs_effect_set_vec2(filter->param_face_center, &filter->face_center);
         }
@@ -300,11 +289,7 @@ void render_filter(snapfilter_data *filter, obs_source_t *target)
             gs_effect_set_vec4(filter->param_tint_color, &filter->tint_color);
         }
     }
-    
-    // Render with shader
-    while (gs_effect_loop(filter->effect, "Draw")) {
-        gs_draw_sprite(tex, 0, width, height);
-    }
-    
-    gs_texture_destroy(tex);
+
+    // Render with custom effect
+    obs_source_process_filter_end(filter->context, filter->effect, 0, 0);
 }
