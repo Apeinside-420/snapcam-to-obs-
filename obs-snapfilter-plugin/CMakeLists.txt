@@ -4,6 +4,9 @@ project(obs-snapfilter VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Require OBS 30+ for updated graphics API
+set(OBS_MIN_VERSION "30.0.0")
+
 # Find packages using pkg-config
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
@@ -11,6 +14,11 @@ find_package(OpenCV REQUIRED)
 
 # Find OBS using pkg-config
 pkg_check_modules(LIBOBS REQUIRED libobs)
+
+# Verify OBS version
+if(LIBOBS_VERSION VERSION_LESS ${OBS_MIN_VERSION})
+    message(FATAL_ERROR "OBS Studio ${OBS_MIN_VERSION} or higher required. Found: ${LIBOBS_VERSION}")
+endif()
 
 # Find jsoncpp
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
