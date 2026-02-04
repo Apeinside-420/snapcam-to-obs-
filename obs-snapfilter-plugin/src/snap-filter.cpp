@@ -92,12 +92,13 @@ void snapfilter_update(void *data, obs_data_t *settings)
     filter->tracking_enabled = obs_data_get_bool(settings, "tracking_enabled");
     filter->smooth_factor = (float)obs_data_get_double(settings, "smooth_factor");
     
-    // Load color
+    // Load color (extract ARGB components into vec4)
     uint32_t color = obs_data_get_int(settings, "tint_color");
-    filter->tint_color[0] = ((color >> 16) & 0xFF) / 255.0f;
-    filter->tint_color[1] = ((color >> 8) & 0xFF) / 255.0f;
-    filter->tint_color[2] = (color & 0xFF) / 255.0f;
-    filter->tint_color[3] = ((color >> 24) & 0xFF) / 255.0f;
+    vec4_set(&filter->tint_color,
+        ((color >> 16) & 0xFF) / 255.0f,  // R
+        ((color >> 8) & 0xFF) / 255.0f,   // G
+        (color & 0xFF) / 255.0f,          // B
+        ((color >> 24) & 0xFF) / 255.0f); // A
     
     // Load lens file if specified
     const char *lens_path = obs_data_get_string(settings, "lens_file");
